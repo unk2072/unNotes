@@ -1,9 +1,12 @@
 package com.unk2072.unnotes;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Semaphore;
 
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,8 +15,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -29,6 +37,7 @@ public class NoteDetailFragment extends Fragment {
     private static final String ARG_PATH = "path";
 
     private EditText mText;
+    private WebView mWebView;
     private TextView mErrorMessage;
     private View mOldVersionWarningView;
     private View mLoadingSpinner;
@@ -40,7 +49,7 @@ public class NoteDetailFragment extends Fragment {
     private final Semaphore mFileUseSemaphore = new Semaphore(1);
     private boolean mUserHasModifiedText = false;
     private boolean mHasLoadedAnyData = false;
-
+    private boolean mEditMode = false;
 
     private final DbxFile.Listener mChangeListener = new DbxFile.Listener() {
 
@@ -115,10 +124,25 @@ public class NoteDetailFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
+        mWebView = (WebView)view.findViewById(R.id.note_preview);
+        mWebView.getSettings().setJavaScriptEnabled(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mWebView.getSettings().setAllowUniversalAccessFromFileURLs(true);
+        }
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                view.loadUrl("javascript:setMarkdown('/data/data/" + getActivity().getPackageName() +"/files/preview.md')");
+            }
+        });
+        mWebView.loadUrl("file:///android_asset/index.html");
+
         mOldVersionWarningView = view.findViewById(R.id.old_version);
         mLoadingSpinner = view.findViewById(R.id.note_loading);
         mErrorMessage = (TextView)view.findViewById(R.id.error_message);
 
+        setHasOptionsMenu(true);
         return view;
     }
 
@@ -134,7 +158,7 @@ public class NoteDetailFragment extends Fragment {
         DbxPath path = new DbxPath(getArguments().getString(ARG_PATH));
 
         // Grab the note name from the path:
-        String title = Util.stripExtension("txt", path.getName());
+        String title = Util.stripExtension("md", path.getName());
 
         getActivity().setTitle(title);
 
@@ -225,6 +249,36 @@ public class NoteDetailFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        if (mEditMode) {
+            MenuItem item = menu.add(R.string.preview_mode);
+            item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    mText.setVisibility(View.GONE);
+                    mWebView.setVisibility(View.VISIBLE);
+                    mEditMode = false;
+                    getActivity().supportInvalidateOptionsMenu();
+                    return true;
+                }
+            });
+        } else {
+            MenuItem item = menu.add(R.string.edit_mode);
+            item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    mText.setVisibility(View.VISIBLE);
+                    mWebView.setVisibility(View.GONE);
+                    mEditMode = true;
+                    getActivity().supportInvalidateOptionsMenu();
+                    return true;
+                }
+            });
+        }
+    }
+
     private void startUpdateOnBackgroundThread() {
         new Thread(new Runnable() {
             @Override
@@ -279,9 +333,17 @@ public class NoteDetailFragment extends Fragment {
 
         // explicitly reset mChanged to false since the setText above changed it to true
         mUserHasModifiedText = false;
+
+        try {
+            OutputStreamWriter out = new OutputStreamWriter(getActivity().openFileOutput("preview.md", Context.MODE_PRIVATE));
+            out.write(data);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        mWebView.reload();
     }
-
-
 
     private static class DbxLoadHandler extends Handler {
 
@@ -325,7 +387,8 @@ public class NoteDetailFragment extends Fragment {
                     Log.e(TAG, "Somehow user changed text while an update was in progress!");
                 }
 
-                frag.mText.setVisibility(View.VISIBLE);
+                frag.mText.setVisibility(View.GONE);
+                frag.mWebView.setVisibility(View.VISIBLE);
                 frag.mLoadingSpinner.setVisibility(View.GONE);
                 frag.mErrorMessage.setVisibility(View.GONE);
 
@@ -342,6 +405,7 @@ public class NoteDetailFragment extends Fragment {
             } else if (msg.what == MESSAGE_LOAD_FAILED) {
                 String errorText = (String)msg.obj;
                 frag.mText.setVisibility(View.GONE);
+                frag.mWebView.setVisibility(View.GONE);
                 frag.mLoadingSpinner.setVisibility(View.GONE);
                 frag.mErrorMessage.setText(errorText);
                 frag.mErrorMessage.setVisibility(View.VISIBLE);

@@ -87,8 +87,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_note_list, container, false);
 
         mEmptyText = view.findViewById(R.id.empty_text);
@@ -126,7 +125,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
 
         DbxFileInfo fileInfo = (DbxFileInfo)getListAdapter().getItem(info.position);
-        menu.setHeaderTitle(Util.stripExtension("txt", fileInfo.path.getName()));
+        menu.setHeaderTitle(Util.stripExtension("md", fileInfo.path.getName()));
         menu.add(Menu.NONE, MENU_RENAME, Menu.NONE, R.string.menu_rename);
         menu.add(Menu.NONE, MENU_DELETE, Menu.NONE, R.string.menu_delete);
     }
@@ -141,7 +140,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         if (itemId == MENU_RENAME) {
             final EditText filenameInput = new EditText(getActivity());
 
-            filenameInput.setText(Util.stripExtension("txt", fileInfo.path.getName()));
+            filenameInput.setText(Util.stripExtension("md", fileInfo.path.getName()));
             filenameInput.setSelectAllOnFocus(true);
 
             new AlertDialog.Builder(getActivity())
@@ -154,15 +153,14 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     if (TextUtils.isEmpty(filename)) {
                         filename = filenameInput.getHint().toString();
                     }
-                    if (!filename.endsWith(".txt")) {
-                        filename += ".txt";
+                    if (!filename.endsWith(".md")) {
+                        filename += ".md";
                     }
 
                     DbxPath p;
                     try {
                         p = new DbxPath("/" + filename);
                     } catch (DbxPath.InvalidPathException e) {
-                        // TODO: build a custom dialog that won't even allow invalid filenames
                         Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
                         return;
                     }
@@ -254,8 +252,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                             if (TextUtils.isEmpty(filename)) {
                                 filename = filenameInput.getHint().toString();
                             }
-                            if (!filename.endsWith(".txt")) {
-                                filename += ".txt";
+                            if (!filename.endsWith(".md")) {
+                                filename += ".md";
                             }
 
                             DbxPath p;
@@ -266,7 +264,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                                 }
                                 p = new DbxPath("/" + filename);
                             } catch (DbxPath.InvalidPathException e) {
-                                // TODO: build a custom dialog that won't even allow invalid filenames
                                 Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
                                 return;
                             }
@@ -306,7 +303,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         mLoadingSpinner.setVisibility(View.GONE);
         mEmptyText.setVisibility(View.VISIBLE);
 
-        // TODO: would be nice to maintain the list's scroll position here when new data is delivered
         setListAdapter(new FolderAdapter(getActivity(), data));
         registerForContextMenu(getListView());
     }
@@ -350,7 +346,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         mLoadingSpinner.setVisibility(View.GONE);
         mLinkButton.setVisibility(View.VISIBLE);
         getActivity().supportInvalidateOptionsMenu();
-        getView().postInvalidate();
+        View view = getView();
+        if (view != null) view.postInvalidate();
     }
 
     private void showLinkedView(boolean reset) {
@@ -359,7 +356,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         mLoadingSpinner.setVisibility(View.VISIBLE);
         mLinkButton.setVisibility(View.GONE);
         getActivity().supportInvalidateOptionsMenu();
-        getView().postInvalidate();
+        View view = getView();
+        if (view != null) view.postInvalidate();
         doLoad(reset);
     }
 }

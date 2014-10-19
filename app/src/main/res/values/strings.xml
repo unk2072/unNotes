@@ -7,7 +7,10 @@
     <string name="no_notes">空のフォルダ</string>
     <string name="unlink_from_dropbox">ログアウト</string>
     <string name="new_note_option">ファイル作成</string>
-    
+
+    <string name="edit_mode">編集</string>
+    <string name="preview_mode">プレビュー</string>
+
     <string name="cancel">キャンセル</string>
 
     <string name="new_note_dialog_title">ファイル作成</string>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>MarkdownPreview</title>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+        <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+        <script type="text/javascript" src="js/marked.min.js"></script>
+        <script>
+            function setMarkdown(file) {
+                var target = $("#markdown_content");
+
+                $.ajax({
+                    url: file,
+                }).success(function(data){
+                    target.html(marked(data));
+                }).error(function(data){
+                    target.html("This content failed to load.");
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div id="markdown_content"></div>
+        </div>
+    </body>
+</html>

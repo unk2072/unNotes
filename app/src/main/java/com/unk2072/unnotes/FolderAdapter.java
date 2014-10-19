@@ -82,7 +82,7 @@ class FolderAdapter extends BaseAdapter {
     }
 
     private String getName(DbxFileInfo info) {
-        return Util.stripExtension("txt", info.path.getName());
+        return Util.stripExtension("md", info.path.getName());
     }
 
 }
