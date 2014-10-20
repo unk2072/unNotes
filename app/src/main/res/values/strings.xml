@@ -8,8 +8,8 @@
     <string name="unlink_from_dropbox">ログアウト</string>
     <string name="new_note_option">ファイル作成</string>
 
-    <string name="edit_mode">編集</string>
-    <string name="preview_mode">プレビュー</string>
+    <string name="edit_mode">編集モード</string>
+    <string name="preview_mode">プレビューモード</string>
 
     <string name="cancel">キャンセル</string>
 

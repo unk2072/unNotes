@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Semaphore;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
@@ -106,6 +107,7 @@ public class NoteDetailFragment extends Fragment {
         super.onStart();
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_note_detail, container, false);
@@ -257,10 +259,13 @@ public class NoteDetailFragment extends Fragment {
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    mText.setVisibility(View.GONE);
                     mWebView.setVisibility(View.VISIBLE);
+                    mText.setVisibility(View.GONE);
                     mEditMode = false;
                     getActivity().supportInvalidateOptionsMenu();
+                    if (mUserHasModifiedText) {
+                        applyNewTextToWebView(mText.getText().toString());
+                    }
                     return true;
                 }
             });
@@ -334,6 +339,10 @@ public class NoteDetailFragment extends Fragment {
         // explicitly reset mChanged to false since the setText above changed it to true
         mUserHasModifiedText = false;
 
+        applyNewTextToWebView(data);
+    }
+
+    private void applyNewTextToWebView(final String data) {
         try {
             OutputStreamWriter out = new OutputStreamWriter(getActivity().openFileOutput("preview.md", Context.MODE_PRIVATE));
             out.write(data);
