@@ -36,6 +36,7 @@ public class NoteDetailFragment extends Fragment {
     private static final String TAG = NoteDetailFragment.class.getName();
 
     private static final String ARG_PATH = "path";
+    private static final String ARG_EDIT = "edit";
 
     private EditText mText;
     private WebView mWebView;
@@ -112,6 +113,9 @@ public class NoteDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_note_detail, container, false);
 
+        if (savedInstanceState != null) {
+            mEditMode = savedInstanceState.getBoolean(ARG_EDIT);
+        }
         mText = (EditText)view.findViewById(R.id.note_detail);
         mText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -146,6 +150,12 @@ public class NoteDetailFragment extends Fragment {
 
         setHasOptionsMenu(true);
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(ARG_EDIT, mEditMode);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -396,8 +406,13 @@ public class NoteDetailFragment extends Fragment {
                     Log.e(TAG, "Somehow user changed text while an update was in progress!");
                 }
 
-                frag.mText.setVisibility(View.GONE);
-                frag.mWebView.setVisibility(View.VISIBLE);
+                if (frag.mEditMode) {
+                    frag.mText.setVisibility(View.VISIBLE);
+                    frag.mWebView.setVisibility(View.GONE);
+                } else {
+                    frag.mWebView.setVisibility(View.VISIBLE);
+                    frag.mText.setVisibility(View.GONE);
+                }
                 frag.mLoadingSpinner.setVisibility(View.GONE);
                 frag.mErrorMessage.setVisibility(View.GONE);
 
