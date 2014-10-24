@@ -7,6 +7,8 @@ import java.util.concurrent.Semaphore;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -141,6 +143,12 @@ public class NoteDetailFragment extends Fragment {
                 super.onPageFinished(view, url);
                 view.loadUrl("javascript:setMarkdown('/data/data/" + getActivity().getPackageName() +"/files/preview.md')");
             }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            }
         });
         mWebView.loadUrl("file:///android_asset/index.html");
 
@@ -271,6 +279,7 @@ public class NoteDetailFragment extends Fragment {
                 public boolean onMenuItemClick(MenuItem item) {
                     mWebView.setVisibility(View.VISIBLE);
                     mText.setVisibility(View.GONE);
+                    mText.setEnabled(false);
                     mEditMode = false;
                     getActivity().supportInvalidateOptionsMenu();
                     if (mUserHasModifiedText) {
@@ -286,6 +295,7 @@ public class NoteDetailFragment extends Fragment {
                 public boolean onMenuItemClick(MenuItem item) {
                     mText.setVisibility(View.VISIBLE);
                     mWebView.setVisibility(View.GONE);
+                    mText.setEnabled(true);
                     mEditMode = true;
                     getActivity().supportInvalidateOptionsMenu();
                     return true;
@@ -425,7 +435,11 @@ public class NoteDetailFragment extends Fragment {
                 frag.mText.requestFocus();
 
                 // reenable the UI
-                frag.mText.setEnabled(true);
+                if (frag.mEditMode) {
+                    frag.mText.setEnabled(true);
+                } else {
+                    frag.mText.setEnabled(false);
+                }
             } else if (msg.what == MESSAGE_LOAD_FAILED) {
                 String errorText = (String)msg.obj;
                 frag.mText.setVisibility(View.GONE);

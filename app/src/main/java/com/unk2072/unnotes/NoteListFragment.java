@@ -122,10 +122,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-
-        DbxFileInfo fileInfo = (DbxFileInfo)getListAdapter().getItem(info.position);
-        menu.setHeaderTitle(Util.stripExtension("md", fileInfo.path.getName()));
         menu.add(Menu.NONE, MENU_RENAME, Menu.NONE, R.string.menu_rename);
         menu.add(Menu.NONE, MENU_DELETE, Menu.NONE, R.string.menu_delete);
     }
@@ -144,7 +140,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             filenameInput.setSelectAllOnFocus(true);
 
             new AlertDialog.Builder(getActivity())
-            .setTitle(R.string.rename_note_dialog_title)
             .setView(filenameInput)
             .setPositiveButton(R.string.rename_note_confirm, new DialogInterface.OnClickListener() {
                 @Override
@@ -243,7 +238,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     filenameInput.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
                     new AlertDialog.Builder(getActivity())
-                    .setTitle(R.string.new_note_dialog_title)
                     .setView(filenameInput)
                     .setPositiveButton(R.string.new_note_confirm, new DialogInterface.OnClickListener() {
                         @Override

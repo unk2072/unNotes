@@ -2,11 +2,11 @@ package com.unk2072.unnotes;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 
 import com.dropbox.sync.android.DbxPath;
 
-public class NoteListActivity extends FragmentActivity implements NoteListFragment.Callbacks {
+public class NoteListActivity extends ActionBarActivity implements NoteListFragment.Callbacks {
 
     private boolean mTwoPane;
 
