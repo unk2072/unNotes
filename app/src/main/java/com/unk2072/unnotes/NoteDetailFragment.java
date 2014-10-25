@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -274,6 +275,8 @@ public class NoteDetailFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         if (mEditMode) {
             MenuItem item = menu.add(R.string.preview_mode);
+            item.setIcon(R.drawable.ic_preview_mode);
+            MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
@@ -290,6 +293,8 @@ public class NoteDetailFragment extends Fragment {
             });
         } else {
             MenuItem item = menu.add(R.string.edit_mode);
+            item.setIcon(R.drawable.ic_edit_mode);
+            MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {

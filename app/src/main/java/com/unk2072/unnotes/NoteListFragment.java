@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -230,6 +231,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
             // New note
             MenuItem newNote = menu.add(R.string.new_note_option);
+            newNote.setIcon(R.drawable.ic_new_note_option);
+            MenuItemCompat.setShowAsAction(newNote, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             newNote.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
@@ -275,6 +278,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
             // Unlink
             MenuItem unlink = menu.add(R.string.unlink_from_dropbox);
+            unlink.setIcon(R.drawable.ic_unlink_from_dropbox);
+            MenuItemCompat.setShowAsAction(unlink, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
             unlink.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
