@@ -141,40 +141,37 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             filenameInput.setSelectAllOnFocus(true);
 
             new AlertDialog.Builder(getActivity())
-            .setView(filenameInput)
-            .setPositiveButton(R.string.rename_note_confirm, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int whichButton) {
-                    String filename = filenameInput.getText().toString();
-                    if (TextUtils.isEmpty(filename)) {
-                        filename = filenameInput.getHint().toString();
-                    }
-                    if (!filename.endsWith(".md")) {
-                        filename += ".md";
-                    }
+                    .setView(filenameInput)
+                    .setPositiveButton(R.string.rename_note_confirm, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            String filename = filenameInput.getText().toString();
+                            if (TextUtils.isEmpty(filename)) {
+                                filename = filenameInput.getHint().toString();
+                            }
+                            if (!filename.endsWith(".md")) {
+                                filename += ".md";
+                            }
 
-                    DbxPath p;
-                    try {
-                        p = new DbxPath("/" + filename);
-                    } catch (DbxPath.InvalidPathException e) {
-                        Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
-                        return;
-                    }
+                            DbxPath p;
+                            try {
+                                p = new DbxPath("/" + filename);
+                            } catch (DbxPath.InvalidPathException e) {
+                                Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                return;
+                            }
 
-                    try {
-                        DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).move(fileInfo.path, p);
-                    } catch (DbxException.Exists e) {
-                        Toast.makeText(getActivity(), R.string.error_file_already_exists, Toast.LENGTH_LONG).show();
-                    } catch (DbxException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int whichButton) {
-                    // Do nothing.
-                }
-            }).show();
+                            try {
+                                DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).move(fileInfo.path, p);
+                            } catch (DbxException.Exists e) {
+                                Toast.makeText(getActivity(), R.string.error_file_already_exists, Toast.LENGTH_LONG).show();
+                            } catch (DbxException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .show();
         } else if (itemId == MENU_DELETE) {
             try {
                 DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).delete(fileInfo.path);
@@ -241,37 +238,34 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     filenameInput.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
                     new AlertDialog.Builder(getActivity())
-                    .setView(filenameInput)
-                    .setPositiveButton(R.string.new_note_confirm, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            String filename = filenameInput.getText().toString();
-                            if (TextUtils.isEmpty(filename)) {
-                                filename = filenameInput.getHint().toString();
-                            }
-                            if (!filename.endsWith(".md")) {
-                                filename += ".md";
-                            }
+                            .setView(filenameInput)
+                            .setPositiveButton(R.string.new_note_confirm, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    String filename = filenameInput.getText().toString();
+                                    if (TextUtils.isEmpty(filename)) {
+                                        filename = filenameInput.getHint().toString();
+                                    }
+                                    if (!filename.endsWith(".md")) {
+                                        filename += ".md";
+                                    }
 
-                            DbxPath p;
-                            try {
-                                if (filename.contains("/")) {
-                                    Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
-                                    return;
+                                    DbxPath p;
+                                    try {
+                                        if (filename.contains("/")) {
+                                            Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                            return;
+                                        }
+                                        p = new DbxPath("/" + filename);
+                                    } catch (DbxPath.InvalidPathException e) {
+                                        Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                        return;
+                                    }
+                                    mCallbacks.onItemSelected(p);
                                 }
-                                p = new DbxPath("/" + filename);
-                            } catch (DbxPath.InvalidPathException e) {
-                                Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
-                                return;
-                            }
-                            mCallbacks.onItemSelected(p);
-                        }
-                    }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            // Do nothing.
-                        }
-                    }).show();
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
                     return true;
                 }
             });

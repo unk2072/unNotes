@@ -57,7 +57,6 @@ public class NoteDetailFragment extends Fragment {
     private boolean mEditMode = false;
 
     private final DbxFile.Listener mChangeListener = new DbxFile.Listener() {
-
         @Override
         public void onFileChange(DbxFile file) {
             // In case a notification is delivered late, make sure we're still
@@ -151,7 +150,6 @@ public class NoteDetailFragment extends Fragment {
                 return true;
             }
         });
-        mWebView.loadUrl("file:///android_asset/index.html");
 
         mOldVersionWarningView = view.findViewById(R.id.old_version);
         mLoadingSpinner = view.findViewById(R.id.note_loading);
@@ -374,9 +372,8 @@ public class NoteDetailFragment extends Fragment {
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return;
         }
-        mWebView.reload();
+        mWebView.loadUrl("file:///android_asset/index.html");
     }
 
     private static class DbxLoadHandler extends Handler {
