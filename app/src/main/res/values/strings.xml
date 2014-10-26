@@ -12,6 +12,7 @@
     <string name="new_note_confirm">作成</string>
     <string name="rename_note_confirm">変更</string>
     <string name="cancel">キャンセル</string>
+    <string name="unlink_confirmation">ログアウトしますか？</string>
 
     <string name="status_folder">フォルダ</string>
 

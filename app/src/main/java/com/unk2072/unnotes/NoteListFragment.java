@@ -276,9 +276,18 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    mAccountManager.unlink();
-                    setListAdapter(null);
-                    showUnlinkedView();
+                    new AlertDialog.Builder(getActivity())
+                            .setMessage(R.string.unlink_confirmation)
+                            .setPositiveButton(R.string.unlink_from_dropbox, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    mAccountManager.unlink();
+                                    setListAdapter(null);
+                                    showUnlinkedView();
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
                     return true;
                 }
             });
