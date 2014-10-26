@@ -79,7 +79,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
             if (resultCode == Activity.RESULT_OK) {
-                // We are now linked.
                 showLinkedView(true);
             }
         } else {
@@ -136,7 +135,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         int itemId = item.getItemId();
         if (itemId == MENU_RENAME) {
             final EditText filenameInput = new EditText(getActivity());
-
             filenameInput.setText(Util.stripExtension("md", fileInfo.path.getName()));
             filenameInput.setSelectAllOnFocus(true);
 
@@ -147,7 +145,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                         public void onClick(DialogInterface dialog, int whichButton) {
                             String filename = filenameInput.getText().toString();
                             if (TextUtils.isEmpty(filename)) {
-                                filename = filenameInput.getHint().toString();
+                                return;
                             }
                             if (!filename.endsWith(".md")) {
                                 filename += ".md";
@@ -155,6 +153,10 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
                             DbxPath p;
                             try {
+                                if (filename.contains("/")) {
+                                    Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                    return;
+                                }
                                 p = new DbxPath("/" + filename);
                             } catch (DbxPath.InvalidPathException e) {
                                 Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
@@ -225,12 +227,10 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (mAccountManager.hasLinkedAccount()) {
-
-            // New note
-            MenuItem newNote = menu.add(R.string.new_note_option);
-            newNote.setIcon(R.drawable.ic_new_note_option);
-            MenuItemCompat.setShowAsAction(newNote, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
-            newNote.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            MenuItem item = menu.add(R.string.new_note_option);
+            item.setIcon(R.drawable.ic_new_note_option);
+            MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+            item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
                     final EditText filenameInput = new EditText(getActivity());
@@ -270,11 +270,10 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            // Unlink
-            MenuItem unlink = menu.add(R.string.unlink_from_dropbox);
-            unlink.setIcon(R.drawable.ic_unlink_from_dropbox);
-            MenuItemCompat.setShowAsAction(unlink, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-            unlink.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            item = menu.add(R.string.unlink_from_dropbox);
+            item.setIcon(R.drawable.ic_unlink_from_dropbox);
+            MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+            item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
                     mAccountManager.unlink();
@@ -306,9 +305,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     public void setActivateOnItemClick(boolean activateOnItemClick) {
-        getListView().setChoiceMode(activateOnItemClick
-                ? ListView.CHOICE_MODE_SINGLE
-                : ListView.CHOICE_MODE_NONE);
+        getListView().setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
     }
 
     public void setActivatedPosition(int position) {

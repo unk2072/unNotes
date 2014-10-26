@@ -24,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -131,6 +132,15 @@ public class NoteDetailFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+        mText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                }
+            }
+        });
 
         mWebView = (WebView)view.findViewById(R.id.note_preview);
         mWebView.getSettings().setJavaScriptEnabled(true);
@@ -176,9 +186,7 @@ public class NoteDetailFragment extends Fragment {
 
         DbxPath path = new DbxPath(getArguments().getString(ARG_PATH));
 
-        // Grab the note name from the path:
         String title = Util.stripExtension("md", path.getName());
-
         getActivity().setTitle(title);
 
         DbxAccount acct = NotesAppConfig.getAccountManager(getActivity()).getLinkedAccount();
@@ -190,14 +198,6 @@ public class NoteDetailFragment extends Fragment {
         mErrorMessage.setVisibility(View.GONE);
         mLoadingSpinner.setVisibility(View.VISIBLE);
 
-        /*
-         * Since mFile is written asynchronously after onPause, it's possible
-         * that the activity is resumed again before a write finishes. This
-         * semaphore prevents us from trying to re-open the file while it's
-         * still being written in the background - we hold it whenever mFile is
-         * in use, and release it when the write is finished and we're done with
-         * the file.
-         */
         try {
             mFileUseSemaphore.acquire();
         } catch (InterruptedException e) {
@@ -280,7 +280,6 @@ public class NoteDetailFragment extends Fragment {
                 public boolean onMenuItemClick(MenuItem item) {
                     mWebView.setVisibility(View.VISIBLE);
                     mText.setVisibility(View.GONE);
-                    mText.setEnabled(false);
                     mEditMode = false;
                     getActivity().supportInvalidateOptionsMenu();
                     if (mUserHasModifiedText) {
@@ -298,7 +297,6 @@ public class NoteDetailFragment extends Fragment {
                 public boolean onMenuItemClick(MenuItem item) {
                     mText.setVisibility(View.VISIBLE);
                     mWebView.setVisibility(View.GONE);
-                    mText.setEnabled(true);
                     mEditMode = true;
                     getActivity().supportInvalidateOptionsMenu();
                     return true;
@@ -355,11 +353,7 @@ public class NoteDetailFragment extends Fragment {
         if (mUserHasModifiedText || data == null) {
             return;
         }
-
         mText.setText(data);
-        mText.setEnabled(true);
-
-        // explicitly reset mChanged to false since the setText above changed it to true
         mUserHasModifiedText = false;
 
         applyNewTextToWebView(data);
@@ -401,17 +395,9 @@ public class NoteDetailFragment extends Fragment {
                 frag.mOldVersionWarningView.setVisibility(latest ? View.GONE : View.VISIBLE);
             } else if (msg.what == MESSAGE_DO_UPDATE) {
                 if (frag.mUserHasModifiedText) {
-                    // user has made changes to the file, so ignore this request
                     return;
                 }
-
-                // disable UI before doing an update - if user were to make
-                // changes between now and when the update completes, they would
-                // erroneously be applied on top of that newer version, so
-                // prevent that by just temporarily disabling the UI (should be
-                // quick anyway).
                 frag.mText.setEnabled(false);
-
                 frag.startUpdateOnBackgroundThread();
             } else if (msg.what == MESSAGE_UPDATE_DONE) {
                 if (frag.mUserHasModifiedText) {
@@ -435,13 +421,7 @@ public class NoteDetailFragment extends Fragment {
                 }
 
                 frag.mText.requestFocus();
-
-                // reenable the UI
-                if (frag.mEditMode) {
-                    frag.mText.setEnabled(true);
-                } else {
-                    frag.mText.setEnabled(false);
-                }
+                frag.mText.setEnabled(true);
             } else if (msg.what == MESSAGE_LOAD_FAILED) {
                 String errorText = (String)msg.obj;
                 frag.mText.setVisibility(View.GONE);

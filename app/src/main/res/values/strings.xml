@@ -13,11 +13,9 @@
 
     <string name="cancel">キャンセル</string>
 
-    <string name="new_note_dialog_title">ファイル作成</string>
-    <string name="new_note_name_hint">ファイル名</string>
+    <string name="new_note_name_hint">新規ファイル</string>
     <string name="new_note_confirm">作成</string>
     
-    <string name="rename_note_dialog_title">ファイル名変更</string>
     <string name="rename_note_confirm">変更</string>
     
     <string name="menu_rename">名前の変更</string>
