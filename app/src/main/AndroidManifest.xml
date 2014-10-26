@@ -10,7 +10,7 @@
         android:allowBackup="false" >
         <activity
             android:name=".NoteListActivity"
-            android:label="@string/title_note_list" >
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -19,7 +19,7 @@
         <activity
             android:name=".NoteDetailActivity"
             android:windowSoftInputMode="adjustResize"
-            android:label="@string/title_note_detail" >
+            android:label="@string/app_name" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".NoteListActivity" />

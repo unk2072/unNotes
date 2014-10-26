@@ -1,11 +1,13 @@
 package com.unk2072.unnotes;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Semaphore;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -271,8 +273,9 @@ public class NoteDetailFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
+        MenuItem item;
         if (mEditMode) {
-            MenuItem item = menu.add(R.string.preview_mode);
+            item = menu.add(R.string.preview_mode);
             item.setIcon(R.drawable.ic_preview_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -289,7 +292,7 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         } else {
-            MenuItem item = menu.add(R.string.edit_mode);
+            item = menu.add(R.string.edit_mode);
             item.setIcon(R.drawable.ic_edit_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -303,6 +306,33 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         }
+        item = menu.add(R.string.help);
+        item.setIcon(R.drawable.ic_help);
+        MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                StringBuilder sb = new StringBuilder();
+                try {
+                    InputStream in = getActivity().getAssets().open("help.txt");
+                    byte[] buf = new byte[1024];
+                    int size;
+                    while ((size = in.read(buf)) >= 0) {
+                        sb.append(new String(buf, 0, size));
+                    }
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return true;
+                }
+
+                new AlertDialog.Builder(getActivity())
+                        .setMessage(sb)
+                        .setPositiveButton(R.string.close, null)
+                        .show();
+                return true;
+            }
+        });
     }
 
     private void startUpdateOnBackgroundThread() {
