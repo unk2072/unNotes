@@ -2,7 +2,6 @@ package com.unk2072.unnotes;
 
 import java.util.List;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.text.format.DateFormat;
@@ -14,12 +13,7 @@ import android.widget.TextView;
 
 import com.dropbox.sync.android.DbxFileInfo;
 
-/**
- * Adapts a {@code List<DbxFileInfo>} to be displayed in a listview.
- * Displays folders as disabled.
- */
 class FolderAdapter extends BaseAdapter {
-
     private final List<DbxFileInfo> mEntries;
     private final LayoutInflater mInflater;
     private final Context mContext;
@@ -46,43 +40,26 @@ class FolderAdapter extends BaseAdapter {
     }
 
     @Override
-    @SuppressLint("InlinedApi")
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            int list_item_resid = (Build.VERSION.SDK_INT >= 11)
-                    ? android.R.layout.simple_list_item_activated_2
-                    : android.R.layout.simple_list_item_2;
-            convertView = mInflater.inflate(list_item_resid, parent, false);
+            int id;
+            if (Build.VERSION.SDK_INT >= 11) {
+                id = android.R.layout.simple_list_item_activated_2;
+            } else {
+                id = android.R.layout.simple_list_item_2;
+            }
+            convertView = mInflater.inflate(id, parent, false);
         }
         DbxFileInfo info = mEntries.get(position);
-        TextView text = (TextView)convertView.findViewById(android.R.id.text1);
-        text.setText(getName(info));
-
+        TextView text1 = (TextView)convertView.findViewById(android.R.id.text1);
         TextView text2 = (TextView)convertView.findViewById(android.R.id.text2);
 
+        text1.setText(Util.stripExtension("md", info.path.getName()));
         if (info.isFolder) {
             text2.setText(R.string.status_folder);
-
-            text.setEnabled(false);
-            text2.setEnabled(false);
         } else {
-            String modDate = DateFormat.getMediumDateFormat(mContext).format(info.modifiedTime) + " " + DateFormat.getTimeFormat(mContext).format(info.modifiedTime);
-            text2.setText(modDate);
-
-            text.setEnabled(true);
-            text2.setEnabled(true);
+            text2.setText(DateFormat.getMediumDateFormat(mContext).format(info.modifiedTime) + " " + DateFormat.getTimeFormat(mContext).format(info.modifiedTime));
         }
         return convertView;
     }
-
-    @Override
-    public boolean isEnabled(int position) {
-        DbxFileInfo info = mEntries.get(position);
-        return !info.isFolder;
-    }
-
-    private String getName(DbxFileInfo info) {
-        return Util.stripExtension("md", info.path.getName());
-    }
-
 }

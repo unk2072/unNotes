@@ -16,41 +16,17 @@ import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxFileSystem.PathListener.Mode;
 import com.dropbox.sync.android.DbxPath;
 
-/**
- * A general-use loader for loading the contents of a folder. Registers for
- * changes and automatically updates when the folder contents change.
- */
 public class FolderLoader extends AsyncTaskLoader<List<DbxFileInfo>> {
-
     private final DbxPath mPath;
     private final DbxAccountManager mAccountManager;
     private final Comparator<DbxFileInfo> mSortComparator;
 
     private List<DbxFileInfo> mCachedContents;
 
-    /**
-     * Creates a FolderLoader for the given path.  Defaults to a case-insensitive i18n-aware sort.
-     *
-     * @param context
-     *            Used to retrieve the application context
-     * @param path
-     *            Path of folder to load
-     */
     public FolderLoader(Context context, DbxAccountManager accountManager, DbxPath path) {
-        this(context, accountManager, path, FolderListComparator.getNameFirst(true));
+        this(context, accountManager, path, new FolderListComparator(true, true));
     }
 
-    /**
-     * Creates a FolderLoader for the given path.
-     *
-     * @param context
-     *            Used to retrieve the application context
-     * @param path
-     *            Path of folder to load
-     * @param sortComparator
-     *            A comparator for sorting the folder contents before they're
-     *            delivered. May be null for no sort.
-     */
     public FolderLoader(Context context, DbxAccountManager accountManager, DbxPath path, Comparator<DbxFileInfo> sortComparator) {
         super(context);
         mAccountManager = accountManager;
@@ -58,7 +34,6 @@ public class FolderLoader extends AsyncTaskLoader<List<DbxFileInfo>> {
         mSortComparator = sortComparator;
     }
 
-    /** a listener that forces a reload when folder contents change */
     private DbxFileSystem.PathListener mChangeListener = new DbxFileSystem.PathListener() {
         @Override
         public void onPathChange(DbxFileSystem fs, DbxPath registeredPath, Mode registeredMode) {
@@ -104,7 +79,6 @@ public class FolderLoader extends AsyncTaskLoader<List<DbxFileInfo>> {
     @Override
     public void deliverResult(List<DbxFileInfo> data) {
         if (isReset()) {
-            // An async result came back after the loader is stopped
             return;
         }
 
@@ -141,7 +115,6 @@ public class FolderLoader extends AsyncTaskLoader<List<DbxFileInfo>> {
             try {
                 return DbxFileSystem.forAccount(account);
             } catch (DbxException.Unauthorized e) {
-                // Account was unlinked asynchronously from server.
                 return null;
             }
         }

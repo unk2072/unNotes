@@ -10,8 +10,7 @@ public final class NotesAppConfig {
     public static final String appKey = "9ncgcdsmjnzibzh";
     public static final String appSecret = "jowbxfk2dad9zs7";
 
-    public static DbxAccountManager getAccountManager(Context context)
-    {
+    public static DbxAccountManager getAccountManager(Context context) {
         return DbxAccountManager.getInstance(context.getApplicationContext(), appKey, appSecret);
     }
 }

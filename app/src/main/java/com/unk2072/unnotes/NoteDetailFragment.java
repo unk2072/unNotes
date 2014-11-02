@@ -42,7 +42,7 @@ public class NoteDetailFragment extends Fragment {
     private static final String TAG = NoteDetailFragment.class.getName();
 
     private static final String ARG_PATH = "path";
-    private static final String ARG_EDIT = "edit";
+    private static final String STATE_EDIT = "edit";
 
     private EditText mText;
     private WebView mWebView;
@@ -62,8 +62,6 @@ public class NoteDetailFragment extends Fragment {
     private final DbxFile.Listener mChangeListener = new DbxFile.Listener() {
         @Override
         public void onFileChange(DbxFile file) {
-            // In case a notification is delivered late, make sure we're still
-            // on-screen (mFile != null) and still working on the same file.
             synchronized(mFileLock) {
                 if (file != mFile) {
                     return;
@@ -71,8 +69,6 @@ public class NoteDetailFragment extends Fragment {
             }
 
             if (mUserHasModifiedText) {
-                // User has modified the text locally, so we no longer care
-                // about external changes.
                 return;
             }
 
@@ -91,7 +87,6 @@ public class NoteDetailFragment extends Fragment {
 
             mHandler.sendIsShowingLatestMessage(currentIsLatest);
 
-            // kick off an update if necessary
             if (newerIsCached || !mHasLoadedAnyData) {
                 mHandler.sendDoUpdateMessage();
             }
@@ -100,17 +95,12 @@ public class NoteDetailFragment extends Fragment {
 
     public NoteDetailFragment() {}
 
-    public static NoteDetailFragment getInstance(DbxPath path) {
+    public static NoteDetailFragment getInstance(String path) {
         NoteDetailFragment fragment = new NoteDetailFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PATH, path.toString());
+        args.putString(ARG_PATH, path);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -119,7 +109,7 @@ public class NoteDetailFragment extends Fragment {
         final View view = inflater.inflate(R.layout.fragment_note_detail, container, false);
 
         if (savedInstanceState != null) {
-            mEditMode = savedInstanceState.getBoolean(ARG_EDIT);
+            mEditMode = savedInstanceState.getBoolean(STATE_EDIT);
         }
         mText = (EditText)view.findViewById(R.id.note_detail);
         mText.addTextChangedListener(new TextWatcher() {
@@ -173,8 +163,8 @@ public class NoteDetailFragment extends Fragment {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(ARG_EDIT, mEditMode);
         super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_EDIT, mEditMode);
     }
 
     @Override
@@ -239,12 +229,10 @@ public class NoteDetailFragment extends Fragment {
         synchronized(mFileLock) {
             mFile.removeListener(mChangeListener);
 
-            // If the contents have changed, write them back to Dropbox
             if (mUserHasModifiedText && mFile != null) {
                 final String newContents = mText.getText().toString();
                 mUserHasModifiedText = false;
 
-                // Start a thread to do the write.
                 new Thread(new Runnable() {
                     @Override
                     public void run() {

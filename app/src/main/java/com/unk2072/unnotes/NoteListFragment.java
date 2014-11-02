@@ -11,6 +11,8 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -34,10 +36,7 @@ import com.dropbox.sync.android.DbxFileSystem;
 import com.dropbox.sync.android.DbxPath;
 
 public class NoteListFragment extends ListFragment implements LoaderCallbacks<List<DbxFileInfo>> {
-
-    @SuppressWarnings("unused")
-    private static final String TAG = NoteListFragment.class.getName();
-
+    private static final String ARG_PATH = "path";
     private static final String STATE_ACTIVATED_POSITION = "activated_position";
 
     private static final int MENU_RENAME = 1;
@@ -50,19 +49,25 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     private View mLoadingSpinner;
     private DbxAccountManager mAccountManager;
 
+    private String mPath;
 
     public interface Callbacks {
-
-        public void onItemSelected(DbxPath path);
+        public void onItemSelected(String path, boolean isFolder);
     }
 
     private static Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onItemSelected(DbxPath path) {
+        public void onItemSelected(String path, boolean isFolder) {
         }
     };
 
-    public NoteListFragment() {}
+    public static NoteListFragment getInstance(String path) {
+        NoteListFragment fragment = new NoteListFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PATH, TextUtils.isEmpty(path) ? "" : path);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,16 +75,29 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        doLoad(false);
+    public void onResume() {
+        super.onResume();
+
+        boolean isRoot;
+        if (TextUtils.isEmpty(mPath)) {
+            getActivity().setTitle(R.string.app_name);
+            isRoot = true;
+        } else {
+            getActivity().setTitle(new DbxPath(mPath).getName());
+            isRoot = false;
+        }
+        ActionBar actionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(!isRoot);
+        }
+        doLoad();
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
             if (resultCode == Activity.RESULT_OK) {
-                showLinkedView(true);
+                showLinkedView();
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -101,14 +119,14 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
             }
         });
 
+        mPath = getArguments().getString(ARG_PATH);
         return view;
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (savedInstanceState != null && savedInstanceState
-                .containsKey(STATE_ACTIVATED_POSITION)) {
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ACTIVATED_POSITION)) {
             setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_POSITION));
         }
         getListView().setEmptyView(view.findViewById(android.R.id.empty));
@@ -116,7 +134,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         if (!mAccountManager.hasLinkedAccount()) {
             showUnlinkedView();
         } else {
-            showLinkedView(false);
+            showLinkedView();
         }
     }
 
@@ -128,45 +146,43 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-
-        final DbxFileInfo fileInfo = (DbxFileInfo)getListAdapter().getItem(info.position);
+        final DbxFileInfo info = (DbxFileInfo)getListAdapter().getItem(((AdapterView.AdapterContextMenuInfo)item.getMenuInfo()).position);
 
         int itemId = item.getItemId();
         if (itemId == MENU_RENAME) {
-            final EditText filenameInput = new EditText(getActivity());
-            filenameInput.setText(Util.stripExtension("md", fileInfo.path.getName()));
-            filenameInput.setSelectAllOnFocus(true);
+            final EditText input = new EditText(getActivity());
+            input.setText(Util.stripExtension("md", info.path.getName()));
+            input.setSelectAllOnFocus(true);
 
             new AlertDialog.Builder(getActivity())
-                    .setView(filenameInput)
-                    .setPositiveButton(R.string.rename_note_confirm, new DialogInterface.OnClickListener() {
+                    .setView(input)
+                    .setPositiveButton(R.string.rename_confirm, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int whichButton) {
-                            String filename = filenameInput.getText().toString();
-                            if (TextUtils.isEmpty(filename)) {
+                            String name = input.getText().toString();
+                            if (TextUtils.isEmpty(name)) {
                                 return;
                             }
-                            if (!filename.endsWith(".md")) {
-                                filename += ".md";
+                            if (!name.endsWith(".md")) {
+                                name += ".md";
                             }
 
                             DbxPath p;
                             try {
-                                if (filename.contains("/")) {
-                                    Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                if (name.contains("/")) {
+                                    Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
                                     return;
                                 }
-                                p = new DbxPath("/" + filename);
+                                p = new DbxPath(mPath + "/" + name);
                             } catch (DbxPath.InvalidPathException e) {
-                                Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
                                 return;
                             }
 
                             try {
-                                DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).move(fileInfo.path, p);
+                                DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).move(info.path, p);
                             } catch (DbxException.Exists e) {
-                                Toast.makeText(getActivity(), R.string.error_file_already_exists, Toast.LENGTH_LONG).show();
+                                Toast.makeText(getActivity(), R.string.error_already_exists, Toast.LENGTH_LONG).show();
                             } catch (DbxException e) {
                                 e.printStackTrace();
                             }
@@ -176,7 +192,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                     .show();
         } else if (itemId == MENU_DELETE) {
             try {
-                DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).delete(fileInfo.path);
+                DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).delete(info.path);
             } catch (DbxException e) {
                 e.printStackTrace();
             }
@@ -206,7 +222,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     @Override
     public void onListItemClick(ListView listView, View view, int position, long id) {
         super.onListItemClick(listView, view, position, id);
-        mCallbacks.onItemSelected(((DbxFileInfo)getListAdapter().getItem(position)).path);
+        DbxFileInfo info = (DbxFileInfo)getListAdapter().getItem(position);
+        mCallbacks.onItemSelected(info.path.toString(), info.isFolder);
     }
 
     @Override
@@ -227,41 +244,89 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (mAccountManager.hasLinkedAccount()) {
-            MenuItem item = menu.add(R.string.new_note_option);
+            MenuItem item = menu.add(R.string.new_folder_option);
+            item.setIcon(R.drawable.ic_new_folder_option);
+            MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+            item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    final EditText input = new EditText(getActivity());
+                    input.setHint(R.string.new_folder_name_hint);
+                    input.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+
+                    new AlertDialog.Builder(getActivity())
+                            .setView(input)
+                            .setPositiveButton(R.string.new_confirm, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    String name = input.getText().toString();
+                                    if (TextUtils.isEmpty(name)) {
+                                        name = input.getHint().toString();
+                                    }
+
+                                    DbxPath p;
+                                    try {
+                                        if (name.contains("/")) {
+                                            Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
+                                            return;
+                                        }
+                                        p = new DbxPath(mPath + "/" + name);
+                                    } catch (DbxPath.InvalidPathException e) {
+                                        Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
+                                        return;
+                                    }
+
+                                    try {
+                                        DbxFileSystem.forAccount(mAccountManager.getLinkedAccount()).createFolder(p);
+                                    } catch (DbxException.Exists e) {
+                                        Toast.makeText(getActivity(), R.string.error_already_exists, Toast.LENGTH_LONG).show();
+                                    } catch (DbxException e) {
+                                        e.printStackTrace();
+                                    }
+                                    mCallbacks.onItemSelected(p.toString(), true);
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
+                    return true;
+                }
+            });
+
+            item = menu.add(R.string.new_note_option);
             item.setIcon(R.drawable.ic_new_note_option);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
-                    final EditText filenameInput = new EditText(getActivity());
-                    filenameInput.setHint(R.string.new_note_name_hint);
-                    filenameInput.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                    final EditText input = new EditText(getActivity());
+                    input.setHint(R.string.new_note_name_hint);
+                    input.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
                     new AlertDialog.Builder(getActivity())
-                            .setView(filenameInput)
-                            .setPositiveButton(R.string.new_note_confirm, new DialogInterface.OnClickListener() {
+                            .setView(input)
+                            .setPositiveButton(R.string.new_confirm, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int whichButton) {
-                                    String filename = filenameInput.getText().toString();
-                                    if (TextUtils.isEmpty(filename)) {
-                                        filename = filenameInput.getHint().toString();
+                                    String name = input.getText().toString();
+                                    if (TextUtils.isEmpty(name)) {
+                                        name = input.getHint().toString();
                                     }
-                                    if (!filename.endsWith(".md")) {
-                                        filename += ".md";
+                                    if (!name.endsWith(".md")) {
+                                        name += ".md";
                                     }
 
                                     DbxPath p;
                                     try {
-                                        if (filename.contains("/")) {
-                                            Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                        if (name.contains("/")) {
+                                            Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
                                             return;
                                         }
-                                        p = new DbxPath("/" + filename);
+                                        p = new DbxPath(mPath + "/" + name);
                                     } catch (DbxPath.InvalidPathException e) {
-                                        Toast.makeText(getActivity(), R.string.error_invalid_filename, Toast.LENGTH_LONG).show();
+                                        Toast.makeText(getActivity(), R.string.error_invalid_name, Toast.LENGTH_LONG).show();
                                         return;
                                     }
-                                    mCallbacks.onItemSelected(p);
+                                    mCallbacks.onItemSelected(p.toString(), false);
                                 }
                             })
                             .setNegativeButton(R.string.cancel, null)
@@ -277,7 +342,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
                     new AlertDialog.Builder(getActivity())
-                            .setMessage(R.string.unlink_confirmation)
+                            .setMessage(R.string.unlink_confirm)
                             .setPositiveButton(R.string.unlink_from_dropbox, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int whichButton) {
@@ -296,7 +361,10 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     @Override
     public Loader<List<DbxFileInfo>> onCreateLoader(int id, Bundle args) {
-        return new FolderLoader(getActivity(), mAccountManager, DbxPath.ROOT);
+        if (TextUtils.isEmpty(mPath)) {
+            return new FolderLoader(getActivity(), mAccountManager, DbxPath.ROOT);
+        }
+        return new FolderLoader(getActivity(), mAccountManager, new DbxPath(mPath));
     }
 
     @Override
@@ -310,7 +378,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     @Override
     public void onLoaderReset(Loader<List<DbxFileInfo>> loader) {
-        // Do nothing.
     }
 
     public void setActivateOnItemClick(boolean activateOnItemClick) {
@@ -327,15 +394,11 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         mActivatedPosition = position;
     }
 
-    private void doLoad(boolean reset) {
+    private void doLoad() {
         if (mAccountManager.hasLinkedAccount()) {
             mEmptyText.setVisibility(View.GONE);
             mLoadingSpinner.setVisibility(View.VISIBLE);
-            if (reset) {
-                getLoaderManager().restartLoader(0, null, this);
-            } else {
-                getLoaderManager().initLoader(0, null, this);
-            }
+            getLoaderManager().restartLoader(0, null, this);
         }
     }
 
@@ -349,7 +412,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         if (view != null) view.postInvalidate();
     }
 
-    private void showLinkedView(boolean reset) {
+    private void showLinkedView() {
         getListView().setVisibility(View.VISIBLE);
         mEmptyText.setVisibility(View.GONE);
         mLoadingSpinner.setVisibility(View.VISIBLE);
@@ -357,6 +420,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         getActivity().supportInvalidateOptionsMenu();
         View view = getView();
         if (view != null) view.postInvalidate();
-        doLoad(reset);
+        doLoad();
     }
 }
