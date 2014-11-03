@@ -263,7 +263,7 @@ public class NoteDetailFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         MenuItem item;
         if (mEditMode) {
-            item = menu.add(R.string.preview_mode);
+            item = menu.add(0, 1, 1, R.string.preview_mode);
             item.setIcon(R.drawable.ic_preview_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -280,7 +280,7 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         } else {
-            item = menu.add(R.string.edit_mode);
+            item = menu.add(0, 1, 1, R.string.edit_mode);
             item.setIcon(R.drawable.ic_edit_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -294,7 +294,7 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         }
-        item = menu.add(R.string.help);
+        item = menu.add(0, 2, 2, R.string.help);
         item.setIcon(R.drawable.ic_help);
         MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {

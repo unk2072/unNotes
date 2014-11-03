@@ -44,12 +44,14 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     private Callbacks mCallbacks = sDummyCallbacks;
     private int mActivatedPosition = ListView.INVALID_POSITION;
+    private View mView;
     private View mEmptyText;
     private View mLinkButton;
     private View mLoadingSpinner;
     private DbxAccountManager mAccountManager;
 
     private String mPath;
+    private boolean mTwoPane;
 
     public interface Callbacks {
         public void onItemSelected(String path, boolean isFolder);
@@ -67,11 +69,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
         args.putString(ARG_PATH, TextUtils.isEmpty(path) ? "" : path);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -94,6 +91,64 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_note_list, container, false);
+        mEmptyText = view.findViewById(R.id.empty_text);
+        mLinkButton = view.findViewById(R.id.link_button);
+        mLoadingSpinner = view.findViewById(R.id.list_loading);
+
+        mLinkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAccountManager.startLinkFromSupportFragment(NoteListFragment.this, 0);
+            }
+        });
+        mPath = getArguments().getString(ARG_PATH);
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mView = view;
+        if (!mAccountManager.hasLinkedAccount()) {
+            showUnlinkedView();
+        } else {
+            showLinkedView();
+        }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mTwoPane = getActivity().findViewById(R.id.note_detail_container) != null;
+        if (mTwoPane) {
+            if (savedInstanceState != null) {
+                mActivatedPosition = savedInstanceState.getInt(STATE_ACTIVATED_POSITION, ListView.INVALID_POSITION);
+            }
+            getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        }
+        getListView().setEmptyView(mView.findViewById(android.R.id.empty));
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if (!(activity instanceof Callbacks)) {
+            throw new IllegalStateException("Activity must implement fragment's callbacks.");
+        }
+        mAccountManager = NotesAppConfig.getAccountManager(activity);
+        mCallbacks = (Callbacks) activity;
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mCallbacks = sDummyCallbacks;
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
             if (resultCode == Activity.RESULT_OK) {
@@ -105,37 +160,25 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_note_list, container, false);
-
-        mEmptyText = view.findViewById(R.id.empty_text);
-        mLinkButton = view.findViewById(R.id.link_button);
-        mLoadingSpinner = view.findViewById(R.id.list_loading);
-
-        mLinkButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mAccountManager.startLinkFromSupportFragment(NoteListFragment.this, 0);
-            }
-        });
-
-        mPath = getArguments().getString(ARG_PATH);
-        return view;
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mActivatedPosition != ListView.INVALID_POSITION) {
+            outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
+        }
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_ACTIVATED_POSITION)) {
-            setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_POSITION));
+    public void onListItemClick(ListView listView, View view, int position, long id) {
+        super.onListItemClick(listView, view, position, id);
+        DbxFileInfo info = (DbxFileInfo)getListAdapter().getItem(position);
+        if (mTwoPane) {
+            if (info.isFolder) {
+                getListView().setItemChecked(mActivatedPosition = ListView.INVALID_POSITION, true);
+            } else {
+                mActivatedPosition = position;
+            }
         }
-        getListView().setEmptyView(view.findViewById(android.R.id.empty));
-
-        if (!mAccountManager.hasLinkedAccount()) {
-            showUnlinkedView();
-        } else {
-            showLinkedView();
-        }
+        mCallbacks.onItemSelected(info.path.toString(), info.isFolder);
     }
 
     @Override
@@ -201,50 +244,10 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if (!(activity instanceof Callbacks)) {
-            throw new IllegalStateException("Activity must implement fragment's callbacks.");
-        }
-
-        mAccountManager = NotesAppConfig.getAccountManager(activity);
-
-        mCallbacks = (Callbacks) activity;
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mCallbacks = sDummyCallbacks;
-    }
-
-    @Override
-    public void onListItemClick(ListView listView, View view, int position, long id) {
-        super.onListItemClick(listView, view, position, id);
-        DbxFileInfo info = (DbxFileInfo)getListAdapter().getItem(position);
-        mCallbacks.onItemSelected(info.path.toString(), info.isFolder);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (mActivatedPosition != ListView.INVALID_POSITION) {
-            outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
-        }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        registerForContextMenu(getListView());
-    }
-
-    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (mAccountManager.hasLinkedAccount()) {
-            MenuItem item = menu.add(R.string.new_folder_option);
+            MenuItem item = menu.add(0, 3, 3, R.string.new_folder_option);
             item.setIcon(R.drawable.ic_new_folder_option);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
@@ -292,7 +295,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            item = menu.add(R.string.new_note_option);
+            item = menu.add(0, 4, 4, R.string.new_note_option);
             item.setIcon(R.drawable.ic_new_note_option);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
@@ -335,7 +338,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            item = menu.add(R.string.unlink_from_dropbox);
+            item = menu.add(0, 5, 5, R.string.unlink_from_dropbox);
             item.setIcon(R.drawable.ic_unlink_from_dropbox);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
@@ -369,10 +372,13 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
 
     @Override
     public void onLoadFinished(Loader<List<DbxFileInfo>> loader, List<DbxFileInfo> data) {
-        mLoadingSpinner.setVisibility(View.GONE);
         mEmptyText.setVisibility(View.VISIBLE);
+        mLoadingSpinner.setVisibility(View.GONE);
 
         setListAdapter(new FolderAdapter(getActivity(), data));
+        if (mTwoPane) {
+            getListView().setItemChecked(mActivatedPosition, true);
+        }
         registerForContextMenu(getListView());
     }
 
@@ -380,46 +386,28 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     public void onLoaderReset(Loader<List<DbxFileInfo>> loader) {
     }
 
-    public void setActivateOnItemClick(boolean activateOnItemClick) {
-        getListView().setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
-    }
-
-    public void setActivatedPosition(int position) {
-        if (position == ListView.INVALID_POSITION) {
-            getListView().setItemChecked(mActivatedPosition, false);
-        } else {
-            getListView().setItemChecked(position, true);
-        }
-
-        mActivatedPosition = position;
-    }
-
     private void doLoad() {
         if (mAccountManager.hasLinkedAccount()) {
-            mEmptyText.setVisibility(View.GONE);
             mLoadingSpinner.setVisibility(View.VISIBLE);
+            mEmptyText.setVisibility(View.GONE);
             getLoaderManager().restartLoader(0, null, this);
         }
     }
 
     private void showUnlinkedView() {
-        getListView().setVisibility(View.GONE);
+        mLinkButton.setVisibility(View.VISIBLE);
         mEmptyText.setVisibility(View.GONE);
         mLoadingSpinner.setVisibility(View.GONE);
-        mLinkButton.setVisibility(View.VISIBLE);
         getActivity().supportInvalidateOptionsMenu();
-        View view = getView();
-        if (view != null) view.postInvalidate();
+        mView.postInvalidate();
     }
 
     private void showLinkedView() {
-        getListView().setVisibility(View.VISIBLE);
-        mEmptyText.setVisibility(View.GONE);
         mLoadingSpinner.setVisibility(View.VISIBLE);
+        mEmptyText.setVisibility(View.GONE);
         mLinkButton.setVisibility(View.GONE);
         getActivity().supportInvalidateOptionsMenu();
-        View view = getView();
-        if (view != null) view.postInvalidate();
+        mView.postInvalidate();
         doLoad();
     }
 }

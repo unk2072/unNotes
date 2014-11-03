@@ -41,6 +41,7 @@ class FolderAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        ViewHolder holder;
         if (convertView == null) {
             int id;
             if (Build.VERSION.SDK_INT >= 11) {
@@ -49,17 +50,29 @@ class FolderAdapter extends BaseAdapter {
                 id = android.R.layout.simple_list_item_2;
             }
             convertView = mInflater.inflate(id, parent, false);
-        }
-        DbxFileInfo info = mEntries.get(position);
-        TextView text1 = (TextView)convertView.findViewById(android.R.id.text1);
-        TextView text2 = (TextView)convertView.findViewById(android.R.id.text2);
-
-        text1.setText(Util.stripExtension("md", info.path.getName()));
-        if (info.isFolder) {
-            text2.setText(R.string.status_folder);
+            holder = new ViewHolder(convertView);
+            convertView.setTag(holder);
         } else {
-            text2.setText(DateFormat.getMediumDateFormat(mContext).format(info.modifiedTime) + " " + DateFormat.getTimeFormat(mContext).format(info.modifiedTime));
+            holder = (ViewHolder)convertView.getTag();
+        }
+
+        DbxFileInfo info = mEntries.get(position);
+        holder.text1.setText(Util.stripExtension("md", info.path.getName()));
+        if (info.isFolder) {
+            holder.text2.setText(R.string.status_folder);
+        } else {
+            holder.text2.setText(DateFormat.getMediumDateFormat(mContext).format(info.modifiedTime) + " " + DateFormat.getTimeFormat(mContext).format(info.modifiedTime));
         }
         return convertView;
+    }
+
+    private static class ViewHolder {
+        final TextView text1;
+        final TextView text2;
+
+        public ViewHolder(View view) {
+            text1 = (TextView)view.findViewById(android.R.id.text1);
+            text2 = (TextView)view.findViewById(android.R.id.text2);
+        }
     }
 }
