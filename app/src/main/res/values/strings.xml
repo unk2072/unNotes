@@ -4,6 +4,7 @@
     <string name="no_notes">空のフォルダ</string>
     <string name="new_note_option">ファイル作成</string>
     <string name="new_folder_option">フォルダ作成</string>
+    <string name="settings">設定</string>
     <string name="unlink_from_dropbox">ログアウト</string>
     <string name="menu_rename">名前の変更</string>
     <string name="menu_delete">削除</string>

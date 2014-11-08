@@ -338,8 +338,8 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            item = menu.add(0, 5, 5, R.string.unlink_from_dropbox);
-            item.setIcon(R.drawable.ic_unlink_from_dropbox);
+            item = menu.add(0, 5, 5, R.string.settings);
+            item.setIcon(R.drawable.ic_settings);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override

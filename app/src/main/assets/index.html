@@ -12,6 +12,10 @@
                 h.onreadystatechange = function() {
                     if (h.readyState == 4) {
                         document.getElementById("md").innerHTML = marked(h.responseText);
+                        var t = document.getElementsByTagName("table");
+                        for (i=0; i<t.length; i++) {
+                            t[i].className = "table table-striped table-bordered";
+                        }
                     }
                 }
                 h.send(null);

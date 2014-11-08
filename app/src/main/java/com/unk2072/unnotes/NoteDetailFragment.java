@@ -136,7 +136,7 @@ public class NoteDetailFragment extends Fragment {
 
         mWebView = (WebView)view.findViewById(R.id.note_preview);
         mWebView.getSettings().setJavaScriptEnabled(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        if (Build.VERSION.SDK_INT >= 16) {
             mWebView.getSettings().setAllowUniversalAccessFromFileURLs(true);
         }
         mWebView.setWebViewClient(new WebViewClient() {
