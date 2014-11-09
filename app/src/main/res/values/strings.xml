@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">unNotes</string>
     <string name="link_to_dropbox">ログイン</string>
+    <string name="unlink_from_dropbox">ログアウト</string>
     <string name="no_notes">空のフォルダ</string>
     <string name="new_note_option">ファイル作成</string>
     <string name="new_folder_option">フォルダ作成</string>
     <string name="settings">設定</string>
-    <string name="unlink_from_dropbox">ログアウト</string>
     <string name="menu_rename">名前の変更</string>
     <string name="menu_delete">削除</string>
 
@@ -14,14 +14,13 @@
     <string name="new_confirm">作成</string>
     <string name="rename_confirm">変更</string>
     <string name="cancel">キャンセル</string>
-    <string name="unlink_confirm">ログアウトしますか？</string>
+    <string name="close">閉じる</string>
 
     <string name="status_folder">フォルダ</string>
 
     <string name="edit_mode">編集モード</string>
     <string name="preview_mode">プレビューモード</string>
     <string name="help">ヘルプ</string>
-    <string name="close">閉じる</string>
 
     <string name="old_version">バージョンが競合したので変更内容をコピーとして作成します</string>
 

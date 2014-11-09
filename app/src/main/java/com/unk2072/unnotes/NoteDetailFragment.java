@@ -1,7 +1,6 @@
 package com.unk2072.unnotes;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Semaphore;
@@ -263,7 +262,7 @@ public class NoteDetailFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         MenuItem item;
         if (mEditMode) {
-            item = menu.add(0, 1, 1, R.string.preview_mode);
+            item = menu.add(0, 0, 3, R.string.preview_mode);
             item.setIcon(R.drawable.ic_preview_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -280,7 +279,7 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         } else {
-            item = menu.add(0, 1, 1, R.string.edit_mode);
+            item = menu.add(0, 0, 3, R.string.edit_mode);
             item.setIcon(R.drawable.ic_edit_mode);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -294,28 +293,18 @@ public class NoteDetailFragment extends Fragment {
                 }
             });
         }
-        item = menu.add(0, 2, 2, R.string.help);
+
+        item = menu.add(0, 0, 4, R.string.help);
         item.setIcon(R.drawable.ic_help);
         MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                StringBuilder sb = new StringBuilder();
-                try {
-                    InputStream in = getActivity().getAssets().open("help.txt");
-                    byte[] buf = new byte[1024];
-                    int size;
-                    while ((size = in.read(buf)) >= 0) {
-                        sb.append(new String(buf, 0, size));
-                    }
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return true;
-                }
+                WebView webView = new WebView(getActivity());
+                webView.loadUrl("file:///android_asset/help.html");
 
                 new AlertDialog.Builder(getActivity())
-                        .setMessage(sb)
+                        .setView(webView)
                         .setPositiveButton(R.string.close, null)
                         .show();
                 return true;

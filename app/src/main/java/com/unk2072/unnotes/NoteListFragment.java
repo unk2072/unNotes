@@ -24,6 +24,7 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -247,7 +248,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         if (mAccountManager.hasLinkedAccount()) {
-            MenuItem item = menu.add(0, 3, 3, R.string.new_folder_option);
+            MenuItem item = menu.add(0, 0, 1, R.string.new_folder_option);
             item.setIcon(R.drawable.ic_new_folder_option);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
@@ -295,7 +296,7 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            item = menu.add(0, 4, 4, R.string.new_note_option);
+            item = menu.add(0, 0, 2, R.string.new_note_option);
             item.setIcon(R.drawable.ic_new_note_option);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
@@ -338,15 +339,19 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                 }
             });
 
-            item = menu.add(0, 5, 5, R.string.settings);
+            item = menu.add(0, 0, 5, R.string.settings);
             item.setIcon(R.drawable.ic_settings);
             MenuItemCompat.setShowAsAction(item, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
             item.setOnMenuItemClickListener(new OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
+                    WebView webView = new WebView(getActivity());
+                    webView.loadUrl("file:///android_asset/about.html");
+
                     new AlertDialog.Builder(getActivity())
-                            .setMessage(R.string.unlink_confirm)
-                            .setPositiveButton(R.string.unlink_from_dropbox, new DialogInterface.OnClickListener() {
+                            .setView(webView)
+                            .setPositiveButton(R.string.close, null)
+                            .setNegativeButton(R.string.unlink_from_dropbox, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int whichButton) {
                                     mAccountManager.unlink();
@@ -354,7 +359,6 @@ public class NoteListFragment extends ListFragment implements LoaderCallbacks<Li
                                     showUnlinkedView();
                                 }
                             })
-                            .setNegativeButton(R.string.cancel, null)
                             .show();
                     return true;
                 }
