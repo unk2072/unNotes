@@ -22,8 +22,6 @@
     <string name="preview_mode">プレビューモード</string>
     <string name="help">ヘルプ</string>
 
-    <string name="old_version">バージョンが競合したので変更内容をコピーとして作成します</string>
-
     <string name="error_invalid_name">無効な名前が指定されました</string>
     <string name="error_already_exists">指定した名前は既に使用されています</string>
     <string name="error_failed_load">Dropboxに接続できませんでした</string>

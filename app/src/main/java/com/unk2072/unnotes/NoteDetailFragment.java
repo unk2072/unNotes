@@ -46,7 +46,6 @@ public class NoteDetailFragment extends Fragment {
     private EditText mText;
     private WebView mWebView;
     private TextView mErrorMessage;
-    private View mOldVersionWarningView;
     private View mLoadingSpinner;
 
     private final DbxLoadHandler mHandler = new DbxLoadHandler(this);
@@ -83,8 +82,6 @@ public class NoteDetailFragment extends Fragment {
                 Log.w(TAG, "Failed to get sync status", e);
                 return;
             }
-
-            mHandler.sendIsShowingLatestMessage(currentIsLatest);
 
             if (newerIsCached || !mHasLoadedAnyData) {
                 mHandler.sendDoUpdateMessage();
@@ -152,7 +149,6 @@ public class NoteDetailFragment extends Fragment {
             }
         });
 
-        mOldVersionWarningView = view.findViewById(R.id.old_version);
         mLoadingSpinner = view.findViewById(R.id.note_loading);
         mErrorMessage = (TextView)view.findViewById(R.id.error_message);
 
@@ -208,16 +204,6 @@ public class NoteDetailFragment extends Fragment {
         }
 
         mFile.addListener(mChangeListener);
-
-        boolean latest;
-        try {
-            latest = mFile.getSyncStatus().isLatest;
-        } catch (DbxException e) {
-            Log.w(TAG, "Failed to get sync status", e);
-            return;
-        }
-
-        mHandler.sendIsShowingLatestMessage(latest);
         mHandler.sendDoUpdateMessage();
     }
 
@@ -381,7 +367,6 @@ public class NoteDetailFragment extends Fragment {
 
         private final WeakReference<NoteDetailFragment> mFragment;
 
-        public static final int MESSAGE_IS_SHOWING_LATEST = 0;
         public static final int MESSAGE_DO_UPDATE = 1;
         public static final int MESSAGE_UPDATE_DONE = 2;
         public static final int MESSAGE_LOAD_FAILED = 3;
@@ -397,10 +382,7 @@ public class NoteDetailFragment extends Fragment {
                 return;
             }
 
-            if (msg.what == MESSAGE_IS_SHOWING_LATEST) {
-                boolean latest = msg.arg1 != 0;
-                frag.mOldVersionWarningView.setVisibility(latest ? View.GONE : View.VISIBLE);
-            } else if (msg.what == MESSAGE_DO_UPDATE) {
+            if (msg.what == MESSAGE_DO_UPDATE) {
                 if (frag.mUserHasModifiedText) {
                     return;
                 }
@@ -439,10 +421,6 @@ public class NoteDetailFragment extends Fragment {
             } else {
                 throw new RuntimeException("Unknown message");
             }
-        }
-
-        public void sendIsShowingLatestMessage(boolean isLatestVersion) {
-            sendMessage(Message.obtain(this, MESSAGE_IS_SHOWING_LATEST, isLatestVersion ? 1 : 0, -1));
         }
 
         public void sendDoUpdateMessage() {
